@@ -11,8 +11,8 @@
 
 #define uS_TO_S_FACTOR   1000000           // Conversion factor for micro seconds to seconds
 #define TIME_TO_SLEEP    10                // WakeUp interval
+#define LOOP_DELAY 1000                    // Interval for loop()
 
-// Fix an issue with the HX711 library on ESP32
 #if !(defined(ARDUINO_ARCH_ESP32))
   #define ARDUINO_ARCH_ESP32 true
 #endif
@@ -40,6 +40,14 @@ extern "C" {
 #include "global.h"
 #include "api-routes.h"
 
+// LIN + IBS200x Sensor
+#include <TJA1020.hpp>
+#include <IBS_Sensor.hpp>
+#define LIN_SERIAL_SPEED LIN_BAUDRATE_IBS_SENSOR
+#define PIN_NSLP 17
+Lin_TJA1020 LinBus(1, LIN_SERIAL_SPEED, PIN_NSLP);
+IBS_Sensor BatSensor(2);
+
 void deepsleepForSeconds(int seconds) {
     esp_sleep_enable_timer_wakeup(seconds * uS_TO_S_FACTOR);
     esp_deep_sleep_start();
@@ -50,7 +58,7 @@ void deepsleepForSeconds(int seconds) {
 void sleepOrDelay() {
   if (enableWifi || enableMqtt) {
     yield();
-    delay(50);
+    delay(LOOP_DELAY);
   } else {
     // We can save a lot of power by going into deepsleep
     // Thid disables WIFI and everything.
@@ -127,7 +135,10 @@ void setup() {
 
   print_wakeup_reason();
   Serial.printf("[SETUP] Configure ESP32 to sleep for every %d Seconds\n", TIME_TO_SLEEP);
-  
+
+  LinBus.setSlope(LinBus.LowSlope);
+  BatSensor.LinBus = &LinBus;
+
   if (!LittleFS.begin(true)) {
     Serial.println(F("[FS] An Error has occurred while mounting LittleFS"));
     // Reduce power consumption while having issues with NVS
@@ -163,6 +174,7 @@ void softReset() {
 }
 
 void loop() {
+  Serial.println("loop() ...");
   if (runtime() - Timing.lastServiceCheck > Timing.serviceInterval) {
     Timing.lastServiceCheck = runtime();
     // Check if all the services work
@@ -170,6 +182,29 @@ void loop() {
       if (enableMqtt && !Mqtt.isConnected()) Mqtt.connect();
     }
   }
-  
+  Serial.println("xxx");
+
+  yield();
+  BatSensor.readFrames();
+  LinBus.setMode(LinBus.Sleep);
+
+  yield();
+  if (enableMqtt && Mqtt.isReady()) {
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/calibrationDone")).c_str(), 0, true, String(BatSensor.CalibrationDone).c_str());
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/UBat")).c_str(), 0, true, String(BatSensor.Ubat).c_str());
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/Ibat")).c_str(), 0, true, String(BatSensor.Ibat).c_str());
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/SOC")).c_str(), 0, true, String(BatSensor.SOC).c_str());
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/SOH")).c_str(), 0, true, String(BatSensor.SOH).c_str());
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/Cap_Available")).c_str(), 0, true, String(BatSensor.Cap_Available).c_str());
+  }
+
+  Serial.printf("-----------------------------\n");
+  Serial.printf("Calibration done: %d\n", BatSensor.CalibrationDone);
+  Serial.printf("Voltage: %.3f Volt\n", BatSensor.Ubat);
+  Serial.printf("Current: %.3f Ampere\n", BatSensor.Ibat);
+  Serial.printf("State of Charge: %.1f %%\n", BatSensor.SOC);
+  Serial.printf("State of Health: %.1f %%\n", BatSensor.SOH);
+  Serial.printf("Available Capacity: %.1f\n", BatSensor.Cap_Available);
+
   sleepOrDelay();
 }

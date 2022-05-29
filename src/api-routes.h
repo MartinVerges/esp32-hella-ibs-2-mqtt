@@ -14,9 +14,25 @@
 
 extern bool enableWifi;
 extern bool enableMqtt;
+//extern IBS_Sensor BatSensor;
 
 void APIRegisterRoutes() {
+/*
+  webServer.on("/api/status", HTTP_GET, [&](AsyncWebServerRequest *request) {
+    String output;
+    StaticJsonDocument<1024> doc;
 
+    doc["CalibrationDone"] = BatSensor.CalibrationDone;
+    doc["Ubat"] = BatSensor.Ubat;
+    doc["Ibat"] = BatSensor.Ibat;
+    doc["SOC"] = BatSensor.SOC;
+    doc["SOH"] = BatSensor.SOH;
+    doc["Cap_Available"] = BatSensor.Cap_Available;
+
+    serializeJson(doc, output);
+    request->send(200, "application/json", output);
+  });
+*/
   webServer.on("/api/reset", HTTP_POST, [&](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     request->send(200, "application/json", "{\"message\":\"Resetting the sensor!\"}");
