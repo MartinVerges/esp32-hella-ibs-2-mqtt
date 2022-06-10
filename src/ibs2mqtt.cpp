@@ -11,7 +11,7 @@
 
 #define uS_TO_S_FACTOR   1000000           // Conversion factor for micro seconds to seconds
 #define TIME_TO_SLEEP    10                // WakeUp interval
-#define LOOP_DELAY 1000                    // Interval for loop()
+#define LOOP_DELAY 5000                    // Interval for loop()
 
 #if !(defined(ARDUINO_ARCH_ESP32))
   #define ARDUINO_ARCH_ESP32 true
@@ -174,7 +174,6 @@ void softReset() {
 }
 
 void loop() {
-  Serial.println("loop() ...");
   if (runtime() - Timing.lastServiceCheck > Timing.serviceInterval) {
     Timing.lastServiceCheck = runtime();
     // Check if all the services work
@@ -182,13 +181,9 @@ void loop() {
       if (enableMqtt && !Mqtt.isConnected()) Mqtt.connect();
     }
   }
-  Serial.println("xxx");
-
-  yield();
   BatSensor.readFrames();
   LinBus.setMode(LinBus.Sleep);
 
-  yield();
   if (enableMqtt && Mqtt.isReady()) {
     Mqtt.client.publish((Mqtt.mqttTopic + String("/calibrationDone")).c_str(), 0, true, String(BatSensor.CalibrationDone).c_str());
     Mqtt.client.publish((Mqtt.mqttTopic + String("/UBat")).c_str(), 0, true, String(BatSensor.Ubat).c_str());
@@ -197,7 +192,8 @@ void loop() {
     Mqtt.client.publish((Mqtt.mqttTopic + String("/SOH")).c_str(), 0, true, String(BatSensor.SOH).c_str());
     Mqtt.client.publish((Mqtt.mqttTopic + String("/Cap_Available")).c_str(), 0, true, String(BatSensor.Cap_Available).c_str());
   }
-
+  Serial.printf("Voltage: %.3f Volt\tState of Charge: %.1f %%\n", BatSensor.Ubat, BatSensor.SOC);
+/*
   Serial.printf("-----------------------------\n");
   Serial.printf("Calibration done: %d\n", BatSensor.CalibrationDone);
   Serial.printf("Voltage: %.3f Volt\n", BatSensor.Ubat);
@@ -205,6 +201,6 @@ void loop() {
   Serial.printf("State of Charge: %.1f %%\n", BatSensor.SOC);
   Serial.printf("State of Health: %.1f %%\n", BatSensor.SOH);
   Serial.printf("Available Capacity: %.1f\n", BatSensor.Cap_Available);
-
+*/
   sleepOrDelay();
 }
