@@ -6,7 +6,7 @@
 **/
 #include <Arduino.h>
 #include <DNSServer.h>
-#include <ESPAsyncWebServer.h>
+#include <WebServer.h>
 #include <FS.h>
 #include <LittleFS.h>
 #include <Preferences.h>
@@ -37,8 +37,7 @@ bool enableWifi = true;                     // Enable Wifi, disable to reduce po
 
 String hostName;
 DNSServer dnsServer;
-AsyncWebServer webServer(webserverPort);
-AsyncEventSource events("/events");
+WebServer webServer(webserverPort);
 Preferences preferences;
 
 MQTTclient Mqtt;

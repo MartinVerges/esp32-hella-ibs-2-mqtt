@@ -10,17 +10,19 @@
 
 bool enableMqtt = false;                    // Enable Mqtt, disable to reduce power consumtion, stored in NVS
 
-MQTTclient::MQTTclient() {}
+MQTTclient::MQTTclient() {
+  client.setClient(ethClient);
+}
 MQTTclient::~MQTTclient() {}
 
 bool MQTTclient::isConnected() {
   return client.connected();
 }
+
 bool MQTTclient::isReady() {
   if (mqttTopic.length() > 0 && isConnected()) return true;
   else return false;
 }
-
 
 void MQTTclient::prepare(String host, uint16_t port, String topic, String user, String pass) {
   mqttHost = host;
@@ -29,11 +31,11 @@ void MQTTclient::prepare(String host, uint16_t port, String topic, String user, 
   mqttUser = user;
   mqttPass = pass;
 
+  // username+password will be used on connect()
   if (mqttUser.length() > 0 && mqttPass.length() > 0) {
       Serial.print(F("[MQTT] Configured broker user: "));
       Serial.println(mqttUser);
       Serial.println(F("[MQTT] Configured broker pass: **hidden**"));
-      client.setCredentials(mqttUser.c_str(), mqttPass.c_str());
   } else Serial.println(F("[MQTT] Configured broker without user and password!"));
 
   if (mqttPort == 0 || mqttPort < 0 || mqttPort > 65535) mqttPort = 1883;
@@ -53,8 +55,8 @@ void MQTTclient::prepare(String host, uint16_t port, String topic, String user, 
 }
 
 void MQTTclient::registerEvents() {
-  client.onDisconnect(onMqttDisconnect);
-  client.onMessage(onMqttMessage);
+//  client.onDisconnect(onMqttDisconnect);
+//  client.onMessage(onMqttMessage);
 }
 
 void MQTTclient::connect() {
@@ -62,13 +64,18 @@ void MQTTclient::connect() {
     Serial.println(F("[MQTT] disabled!"));
   } else {
     Serial.println(F("[MQTT] Connecting to MQTT..."));
-    client.connect();
+    client.connect(
+      mqttClientId.c_str(),
+      mqttUser.length() > 0 ? mqttUser.c_str() : NULL,
+      mqttPass.length() > 0 ? mqttPass.c_str() : NULL
+    );
   }
 }
-void MQTTclient::disconnect(bool force) {
-  client.disconnect(force);
+void MQTTclient::disconnect() {
+  client.disconnect();
 }
 
+/*
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
   Serial.print(F("[MQTT] Disconnected from MQTT with reason: "));
   Serial.println(static_cast<uint8_t>(reason));
@@ -107,3 +114,4 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   Serial.print("  total: ");
   Serial.println(total);
 }
+*/

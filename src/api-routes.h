@@ -32,7 +32,7 @@ void APIRegisterRoutes() {
     serializeJson(doc, output);
     request->send(200, "application/json", output);
   });
-*/
+*//*
   webServer.on("/api/reset", HTTP_POST, [&](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     request->send(200, "application/json", "{\"message\":\"Resetting the sensor!\"}");
@@ -72,7 +72,7 @@ void APIRegisterRoutes() {
       preferences.putString("mqttUser", jsonBuffer["mqttuser"].as<String>());
       preferences.putString("mqttPass", jsonBuffer["mqttpass"].as<String>());
       if (preferences.putBool("enableMqtt", jsonBuffer["enablemqtt"].as<boolean>())) {
-        if (enableMqtt) Mqtt.disconnect(true);
+        if (enableMqtt) Mqtt.disconnect();
         enableMqtt = jsonBuffer["enablemqtt"].as<boolean>();
         if (enableMqtt) {
           Mqtt.prepare(
@@ -127,9 +127,9 @@ void APIRegisterRoutes() {
   webServer.on("/api/esp/freq", HTTP_GET, [&](AsyncWebServerRequest * request) {
     request->send(200, "text/plain", String(ESP.getCpuFreqMHz()));
   });
-
-  webServer.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-  
+*/
+  webServer.serveStatic("/", LittleFS, "/"); //.setDefaultFile("index.html");
+/*  
   events.onConnect([](AsyncEventSourceClient *client) {
     if (client->lastId()) {
       Serial.printf("[WEB] Client reconnected! Last message ID that it got is: %u\n", client->lastId());
@@ -146,4 +146,5 @@ void APIRegisterRoutes() {
       } else request->send(404, "text/plain", "Not found");
     }
   });
+  */
 }

@@ -20,8 +20,7 @@
 #define USE_LittleFS true
 
 #include <Arduino.h>
-#include <AsyncElegantOTA.h>
-#include <AsyncTCP.h>
+#include <WebServer.h>
 #include <Preferences.h>
 #include <ESPmDNS.h>
 
@@ -110,7 +109,6 @@ void initWifiAndServices() {
   WifiManager.fallbackToSoftAp(preferences.getBool("enableSoftAp", true));
 
   APIRegisterRoutes();
-  AsyncElegantOTA.begin(&webServer);
   webServer.begin();
   Serial.println(F("[WEB] HTTP server started"));
 
@@ -164,7 +162,7 @@ void setup() {
 // Soft reset the ESP to start with setup() again, but without loosing RTC_DATA as it would be with ESP.reset()
 void softReset() {
   if (enableWifi) {
-    webServer.end();
+    webServer.close();
     MDNS.end();
     Mqtt.disconnect();
     WifiManager.stopWifi();
@@ -174,6 +172,8 @@ void softReset() {
 }
 
 void loop() {
+  webServer.handleClient();
+  
   if (runtime() - Timing.lastServiceCheck > Timing.serviceInterval) {
     Timing.lastServiceCheck = runtime();
     // Check if all the services work
@@ -181,6 +181,7 @@ void loop() {
       if (enableMqtt && !Mqtt.isConnected()) Mqtt.connect();
     }
   }
+  /*
   BatSensor.readFrames();
   LinBus.setMode(LinBus.Sleep);
 
@@ -202,5 +203,5 @@ void loop() {
   Serial.printf("State of Health: %.1f %%\n", BatSensor.SOH);
   Serial.printf("Available Capacity: %.1f\n", BatSensor.Cap_Available);
 */
-  sleepOrDelay();
+  //sleepOrDelay();
 }
