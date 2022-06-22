@@ -9,25 +9,26 @@
     // ******* SHOW LEVEL ******** //
     let level = undefined;
     async function getCurrentLevel() {
-        const res = await fetch(`${variables.url}/api/level/current`);
-        const value = await res.text();
-
-        if (res.ok) level = parseInt(value);
-		else throw new Error(value);
+        const response = await fetch(`/api/level/current`).catch(error => { throw new Error(`${error})`); });
+        if(!response.ok) {
+            toast.push(`Error ${response.status} ${response.statusText}<br>Unable to request current level.`, variables.toast.error)
+        }
+        const value = await response.text();
+        level = parseInt(value);
     }
-    onMount(async () => { getCurrentLevel() } );
 
     let refreshInterval
-    $: {
+    onMount(async () => { 
+        getCurrentLevel()
         clearInterval(refreshInterval)
-        refreshInterval = setInterval(getCurrentLevel, 2500)
-    }
+        refreshInterval = setInterval(getCurrentLevel, 5000)
+    });
 
     // ******* REPRESSUREIZE ******** //
     let isVisible = false;
     async function repressurizeTube() {
         isVisible = true;
-        const response = await fetch(`${variables.url}/api/restore/pressure`).catch(error => { throw new Error(`${error})`); });
+        const response = await fetch(`/api/restore/pressure`).catch(error => { throw new Error(`${error})`); });
 		if(!response.ok) {
             toast.push(`Error ${response.status} ${response.statusText}<br>Unable to repressurize tube.`, variables.toast.error)
         }

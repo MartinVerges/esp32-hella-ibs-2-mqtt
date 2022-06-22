@@ -20,7 +20,7 @@
 #define USE_LittleFS true
 
 #include <Arduino.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 #include <Preferences.h>
 #include <ESPmDNS.h>
 
@@ -44,7 +44,7 @@ extern "C" {
 #include <IBS_Sensor.hpp>
 #define LIN_SERIAL_SPEED LIN_BAUDRATE_IBS_SENSOR
 #define PIN_NSLP 17
-Lin_TJA1020 LinBus(1, LIN_SERIAL_SPEED, PIN_NSLP);
+Lin_TJA1020 LinBus(2, LIN_SERIAL_SPEED, PIN_NSLP);
 IBS_Sensor BatSensor(2);
 
 void deepsleepForSeconds(int seconds) {
@@ -153,16 +153,16 @@ void setup() {
   }
   enableWifi = preferences.getBool("enableWifi", true);
   enableMqtt = preferences.getBool("enableMqtt", false);
-  preferences.end();
-  
   if (enableWifi) initWifiAndServices();
   else Serial.println(F("[WIFI] Not starting WiFi!"));
+  
+  preferences.end();
 }
 
 // Soft reset the ESP to start with setup() again, but without loosing RTC_DATA as it would be with ESP.reset()
 void softReset() {
   if (enableWifi) {
-    webServer.close();
+    //webServer.close();
     MDNS.end();
     Mqtt.disconnect();
     WifiManager.stopWifi();
@@ -172,8 +172,6 @@ void softReset() {
 }
 
 void loop() {
-  webServer.handleClient();
-  
   if (runtime() - Timing.lastServiceCheck > Timing.serviceInterval) {
     Timing.lastServiceCheck = runtime();
     // Check if all the services work
@@ -181,27 +179,26 @@ void loop() {
       if (enableMqtt && !Mqtt.isConnected()) Mqtt.connect();
     }
   }
-  /*
+  
   BatSensor.readFrames();
   LinBus.setMode(LinBus.Sleep);
 
+  if (enableMqtt) Mqtt.client.loop();
   if (enableMqtt && Mqtt.isReady()) {
-    Mqtt.client.publish((Mqtt.mqttTopic + String("/calibrationDone")).c_str(), 0, true, String(BatSensor.CalibrationDone).c_str());
-    Mqtt.client.publish((Mqtt.mqttTopic + String("/UBat")).c_str(), 0, true, String(BatSensor.Ubat).c_str());
-    Mqtt.client.publish((Mqtt.mqttTopic + String("/Ibat")).c_str(), 0, true, String(BatSensor.Ibat).c_str());
-    Mqtt.client.publish((Mqtt.mqttTopic + String("/SOC")).c_str(), 0, true, String(BatSensor.SOC).c_str());
-    Mqtt.client.publish((Mqtt.mqttTopic + String("/SOH")).c_str(), 0, true, String(BatSensor.SOH).c_str());
-    Mqtt.client.publish((Mqtt.mqttTopic + String("/Cap_Available")).c_str(), 0, true, String(BatSensor.Cap_Available).c_str());
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/calibrationDone")).c_str(), String(BatSensor.CalibrationDone).c_str(), true);
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/UBat")).c_str(), String(BatSensor.Ubat).c_str(), true);
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/Ibat")).c_str(), String(BatSensor.Ibat).c_str(), true);
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/SOC")).c_str(), String(BatSensor.SOC).c_str(), true);
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/SOH")).c_str(), String(BatSensor.SOH).c_str(), true);
+    Mqtt.client.publish((Mqtt.mqttTopic + String("/Cap_Available")).c_str(), String(BatSensor.Cap_Available).c_str(), true);
   }
-  Serial.printf("Voltage: %.3f Volt\tState of Charge: %.1f %%\n", BatSensor.Ubat, BatSensor.SOC);
-/*
-  Serial.printf("-----------------------------\n");
-  Serial.printf("Calibration done: %d\n", BatSensor.CalibrationDone);
-  Serial.printf("Voltage: %.3f Volt\n", BatSensor.Ubat);
-  Serial.printf("Current: %.3f Ampere\n", BatSensor.Ibat);
-  Serial.printf("State of Charge: %.1f %%\n", BatSensor.SOC);
-  Serial.printf("State of Health: %.1f %%\n", BatSensor.SOH);
-  Serial.printf("Available Capacity: %.1f\n", BatSensor.Cap_Available);
-*/
-  //sleepOrDelay();
+  Serial.printf("[DATA] -----------------------------\n");
+  Serial.printf("[DATA] Calibration done: %d\n", BatSensor.CalibrationDone);
+  Serial.printf("[DATA] Voltage: %.3f Volt\n", BatSensor.Ubat);
+  Serial.printf("[DATA] Current: %.3f Ampere\n", BatSensor.Ibat);
+  Serial.printf("[DATA] State of Charge: %.1f %%\n", BatSensor.SOC);
+  Serial.printf("[DATA] State of Health: %.1f %%\n", BatSensor.SOH);
+  Serial.printf("[DATA] Available Capacity: %.1f\n", BatSensor.Cap_Available);
+
+  sleepOrDelay();
 }

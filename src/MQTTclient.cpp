@@ -67,8 +67,15 @@ void MQTTclient::connect() {
     client.connect(
       mqttClientId.c_str(),
       mqttUser.length() > 0 ? mqttUser.c_str() : NULL,
-      mqttPass.length() > 0 ? mqttPass.c_str() : NULL
+      mqttPass.length() > 0 ? mqttPass.c_str() : NULL,
+      0,
+      0,
+      1,
+      0,
+      1
     );
+    sleep(0.5);
+    Serial.println(client.state());
   }
 }
 void MQTTclient::disconnect() {

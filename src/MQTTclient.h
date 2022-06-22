@@ -7,8 +7,8 @@
 **/
 
 #include <Preferences.h>
+#include <WiFi.h>
 #include <PubSubClient.h>
-#include <Ethernet.h>
 
 extern bool enableMqtt;
 
@@ -33,7 +33,7 @@ class MQTTclient {
 
         PubSubClient client;
     private:
-        EthernetClient ethClient;
+        WiFiClient ethClient;
 };
 
 //void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);

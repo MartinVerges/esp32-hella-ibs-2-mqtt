@@ -11,10 +11,11 @@
 #include <ESPAsyncWebServer.h>
 #include <FS.h>
 #include <LittleFS.h>
+#include <IBS_Sensor.hpp>
 
 extern bool enableWifi;
 extern bool enableMqtt;
-//extern IBS_Sensor BatSensor;
+extern IBS_Sensor BatSensor;
 
 void APIRegisterRoutes() {
 /*
@@ -32,7 +33,17 @@ void APIRegisterRoutes() {
     serializeJson(doc, output);
     request->send(200, "application/json", output);
   });
-*//*
+*/
+  webServer.on("/api/level/current", HTTP_GET, [&](AsyncWebServerRequest *request) {
+    if (request->contentType() == "application/json") {
+      String output;
+      StaticJsonDocument<16> doc;
+      doc["levelPercent"] = BatSensor.SOC;
+      serializeJson(doc, output);
+      request->send(200, "application/json", output);
+    } else request->send(200, "text/plain", (String)BatSensor.SOC);
+  });
+
   webServer.on("/api/reset", HTTP_POST, [&](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     request->send(200, "application/json", "{\"message\":\"Resetting the sensor!\"}");
@@ -127,15 +138,10 @@ void APIRegisterRoutes() {
   webServer.on("/api/esp/freq", HTTP_GET, [&](AsyncWebServerRequest * request) {
     request->send(200, "text/plain", String(ESP.getCpuFreqMHz()));
   });
-*/
-  webServer.serveStatic("/", LittleFS, "/"); //.setDefaultFile("index.html");
-/*  
-  events.onConnect([](AsyncEventSourceClient *client) {
-    if (client->lastId()) {
-      Serial.printf("[WEB] Client reconnected! Last message ID that it got is: %u\n", client->lastId());
-    }
-  });
-  webServer.addHandler(&events);
+
+  webServer.serveStatic("/", LittleFS, "/")
+    .setCacheControl("max-age=86400")
+    .setDefaultFile("index.html");
 
   webServer.onNotFound([](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_OPTIONS) {
@@ -146,5 +152,4 @@ void APIRegisterRoutes() {
       } else request->send(404, "text/plain", "Not found");
     }
   });
-  */
 }
