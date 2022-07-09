@@ -42,9 +42,14 @@ extern "C" {
 // LIN + IBS200x Sensor
 #include <TJA1020.hpp>
 #include <IBS_Sensor.hpp>
-#define LIN_SERIAL_SPEED LIN_BAUDRATE_IBS_SENSOR
-#define PIN_NSLP 17
-Lin_TJA1020 LinBus(2, LIN_SERIAL_SPEED, PIN_NSLP);
+
+#define LIN_SERIAL_SPEED LIN_BAUDRATE_IBS_SENSOR /* Required by IBS Sensor */
+#define PIN_NSLP 21
+
+// utilize the TJA1020 by using UART2 for writing and reading Frames
+Lin_TJA1020 LinBus(2, LIN_SERIAL_SPEED, PIN_NSLP); // UART_nr, Baudrate, /SLP
+
+// Hella IBS 200x "Sensor 2"
 IBS_Sensor BatSensor(2);
 
 void deepsleepForSeconds(int seconds) {
