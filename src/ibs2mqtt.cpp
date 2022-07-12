@@ -98,16 +98,7 @@ void print_wakeup_reason() {
   }
 }
 
-void MDNSBegin(String hostname) {
-  if (!enableWifi) return;
-  Serial.println("[MDNS] Starting mDNS Service!");
-  MDNS.begin(hostname.c_str());
-  MDNS.addService("http", "tcp", 80);
-}
-
 void initWifiAndServices() {
-  Serial.println(F("[DEBUG] calling initWifiAndServices()"));
-
   // Load well known Wifi AP credentials from NVS
   WifiManager.startBackgroundTask();
   WifiManager.attachWebServer(&webServer);
@@ -117,7 +108,11 @@ void initWifiAndServices() {
   webServer.begin();
   Serial.println(F("[WEB] HTTP server started"));
 
-  MDNSBegin(hostName);
+  if (enableWifi) {
+    Serial.println("[MDNS] Starting mDNS Service!");
+    MDNS.begin(hostName.c_str());
+    MDNS.addService("http", "tcp", 80);
+  }
 
   if (enableMqtt) {
     Mqtt.prepare(

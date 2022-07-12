@@ -143,7 +143,7 @@ void APIRegisterRoutes() {
     .setCacheControl("max-age=86400")
     .setDefaultFile("index.html");
 
-  webServer.onNotFound([](AsyncWebServerRequest *request) {
+  webServer.onNotFound([&](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_OPTIONS) {
       request->send(200);
     } else {

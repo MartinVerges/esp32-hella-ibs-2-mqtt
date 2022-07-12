@@ -35,6 +35,3 @@ class MQTTclient {
     private:
         WiFiClient ethClient;
 };
-
-//void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
-//void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
