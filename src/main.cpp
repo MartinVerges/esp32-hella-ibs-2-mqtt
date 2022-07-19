@@ -1,5 +1,5 @@
 /**
- * @file global.h
+ * @file main.cpp
  * @author Martin Verges <martin@verges.cc>
  * @version 0.1
  * @date 2022-05-29
@@ -36,9 +36,6 @@ extern "C" {
   #endif
 }
 
-#include "global.h"
-#include "api-routes.h"
-
 // LIN + IBS200x Sensor
 #include <TJA1020.hpp>
 #include <IBS_Sensor.hpp>
@@ -51,6 +48,9 @@ Lin_TJA1020 LinBus(2, LIN_SERIAL_SPEED, PIN_NSLP); // UART_nr, Baudrate, /SLP
 
 // Hella IBS 200x "Sensor 2"
 IBS_Sensor BatSensor(2);
+
+#include "global.h"
+#include "api-routes.h"
 
 void deepsleepForSeconds(int seconds) {
     esp_sleep_enable_timer_wakeup(seconds * uS_TO_S_FACTOR);
@@ -157,6 +157,7 @@ void setup() {
   else Serial.println(F("[WIFI] Not starting WiFi!"));
   
   preferences.end();
+  Serial.println("[DEBUG] end setup()");
 }
 
 // Soft reset the ESP to start with setup() again, but without loosing RTC_DATA as it would be with ESP.reset()
@@ -172,6 +173,7 @@ void softReset() {
 }
 
 void loop() {
+  Serial.println("[DEBUG] start loop()");
   if (runtime() - Timing.lastServiceCheck > Timing.serviceInterval) {
     Timing.lastServiceCheck = runtime();
     // Check if all the services work
@@ -181,7 +183,9 @@ void loop() {
   }
   
   BatSensor.readFrames();
+  Serial.println("[DEBUG] end readFrames()");
   LinBus.setMode(LinBus.Sleep);
+  Serial.println("[DEBUG] end LinBus.setMode()");
 
   if (enableMqtt) Mqtt.client.loop();
   if (enableMqtt && Mqtt.isReady()) {
